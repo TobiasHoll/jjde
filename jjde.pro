@@ -3,5 +3,16 @@ CONFIG += console
 CONFIG -= app_bundle
 CONFIG -= qt
 
-SOURCES += main.cpp
+SOURCES += \
+    main.cpp
+
+QMAKE_CXXFLAGS += -O3 -std=c++14 -g
+
+HEADERS += \
+    flags.hpp \
+    bytes.hpp \
+    constants.hpp
+
+OTHER_FILES += \
+    resources/Example.java
 
