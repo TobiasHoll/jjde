@@ -35,7 +35,7 @@ struct Constant {
     };
 
     struct Value { // Must be a struct, because vectors cannot be stored in unions
-        std::vector<unsigned char> string;
+        std::string string;
         int32_t integer = 0;
         float float_ = 0.0f;
         int64_t long_ = 0L;
@@ -68,10 +68,8 @@ Constant read_constant(std::ifstream & stream, Constant::Type type) {
     case Constant::Type::STRING:
         // u2 string length + mUTF-8 string
         string_length = parse<uint16_t>(extract<2>(stream));
-        value.string = extract(stream, string_length);
-        std::clog << "[D] constant pool [" << stream.tellg() << "] <- String (1) : length=" << value.string.size() << ", value='";
-        for (unsigned char c : value.string) std::clog << ((char) c);
-        std::clog << "'" << std::endl;
+        value.string = convert_java_string(extract(stream, string_length));
+        std::clog << "[D] constant pool [" << stream.tellg() << "] <- String (1) : length=" << value.string.size() << ", value='" << value.string << "'" << std::endl;
         break;
     case Constant::Type::INTEGER:
         // s4 integer
