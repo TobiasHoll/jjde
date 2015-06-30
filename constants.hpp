@@ -34,7 +34,7 @@ struct Constant {
         INVOKE_DYNAMIC = 18
     };
 
-    struct Value { // Must be a struct, because vectors cannot be stored in unions
+    struct Value { // Must be a struct, because strings cannot be stored in unions
         std::string string;
         int32_t integer = 0;
         float float_ = 0.0f;
@@ -61,7 +61,9 @@ std::string convert_java_string(std::vector<unsigned char> const& string) {
     return stream.str();
 }
 
-Constant read_constant(std::ifstream & stream, Constant::Type type) {
+std::pair<Constant, bool> read_constant(std::ifstream & stream) {
+    Constant::Type type = (Constant::Type) parse<uint8_t>(extract<1>(stream));
+    bool skip = (type == Constant::Type::LONG || type == Constant::Type::DOUBLE);
     uint16_t string_length, ref1, ref2;
     Constant::Value value;
     switch (type) {
@@ -69,87 +71,79 @@ Constant read_constant(std::ifstream & stream, Constant::Type type) {
         // u2 string length + mUTF-8 string
         string_length = parse<uint16_t>(extract<2>(stream));
         value.string = convert_java_string(extract(stream, string_length));
-        std::clog << "[D] constant pool [" << stream.tellg() << "] <- String (1) : length=" << value.string.size() << ", value='" << value.string << "'" << std::endl;
         break;
     case Constant::Type::INTEGER:
         // s4 integer
         value.integer = parse<int32_t>(extract<4>(stream));
-        std::clog << "[D] constant pool [" << stream.tellg() << "] <- Integer (3) : value=" << value.integer << std::endl;
         break;
     case Constant::Type::FLOAT:
         // s4 float
         value.float_ = parse<float>(extract<4>(stream));
-        std::clog << "[D] constant pool [" << stream.tellg() << "] <- Float (4) : value=" << value.float_ << std::endl;
         break;
     case Constant::Type::LONG:
         // s8 long
         value.long_ = parse<int64_t>(extract<8>(stream));
-        std::clog << "[D] constant pool [" << stream.tellg() << "] <- Long (5) : value=" << value.long_ << std::endl;
         break;
     case Constant::Type::DOUBLE:
         // s8 double
         value.double_ = parse<double>(extract<8>(stream));
-        std::clog << "[D] constant pool [" << stream.tellg() << "] <- Double (6) : value=" << value.double_ << std::endl;
         break;
     case Constant::Type::CLASS_REFERENCE:
-        // u2 class reference (index to entry of string type containing the class name)
-        value.reference = parse<uint16_t>(extract<2>(stream));
-        std::clog << "[D] constant pool [" << stream.tellg() << "] <- Class Reference (7) : index=" << value.reference << std::endl;
-        break;
     case Constant::Type::STRING_REFERENCE:
+    case Constant::Type::METHOD_TYPE:
+        // u2 class reference (index to entry of string type containing the class name)
         // u2 string reference (index to entry of string type)
+        // u2 method type (pool index)
         value.reference = parse<uint16_t>(extract<2>(stream));
-        std::clog << "[D] constant pool [" << stream.tellg() << "] <- String Reference (8) : index=" << value.reference << std::endl;
         break;
     case Constant::Type::FIELD_REFERENCE:
-        // 2u2 field reference (index to class reference and index to name/type descriptor)
-        ref1 = parse<uint16_t>(extract<2>(stream));
-        ref2 = parse<uint16_t>(extract<2>(stream));
-        value.pair_reference = std::pair<uint16_t, uint16_t>(ref1, ref2);
-        std::clog << "[D] constant pool [" << stream.tellg() << "] <- Field Reference (9) : class ref. index=" << value.pair_reference.first << ", n/t desc. index=" << value.pair_reference.second << std::endl;
-        break;
     case Constant::Type::METHOD_REFERENCE:
-        // 2u2 method reference (index to class reference and index to name/type descriptor)
-        ref1 = parse<uint16_t>(extract<2>(stream));
-        ref2 = parse<uint16_t>(extract<2>(stream));
-        value.pair_reference = std::pair<uint16_t, uint16_t>(ref1, ref2);
-        std::clog << "[D] constant pool [" << stream.tellg() << "] <- Method Reference (10) : class ref. index=" << value.pair_reference.first << ", n/t desc. index=" << value.pair_reference.second << std::endl;
-        break;
     case Constant::Type::INTERFACE_METHOD_REFERENCE:
-        // 2u2 interface method reference (index to class reference and index to name/type descriptor)
-        ref1 = parse<uint16_t>(extract<2>(stream));
-        ref2 = parse<uint16_t>(extract<2>(stream));
-        value.pair_reference = std::pair<uint16_t, uint16_t>(ref1, ref2);
-        std::clog << "[D] constant pool [" << stream.tellg() << "] <- Interface Method Reference (11) : class ref. index=" << value.pair_reference.first << ", n/t desc. index=" << value.pair_reference.second << std::endl;
-        break;
     case Constant::Type::NAME_TYPE_DESCRIPTOR:
+        // 2u2 field reference (index to class reference and index to name/type descriptor)
+        // 2u2 method reference (index to class reference and index to name/type descriptor)
+        // 2u2 interface method reference (index to class reference and index to name/type descriptor)
         // 2u2 name/type descriptor (index to the name and index to the entry containing the type descriptor)
         ref1 = parse<uint16_t>(extract<2>(stream));
         ref2 = parse<uint16_t>(extract<2>(stream));
         value.pair_reference = std::pair<uint16_t, uint16_t>(ref1, ref2);
-        std::clog << "[D] constant pool [" << stream.tellg() << "] <- Name / Type Descriptor (12) : name index=" << value.pair_reference.first << ", type index=" << value.pair_reference.second << std::endl;
         break;
     case Constant::Type::METHOD_HANDLE:
         // u1u2 method handle (type descriptor and pool index)
         ref1 = parse<uint8_t>(extract<2>(stream));
         ref2 = parse<uint16_t>(extract<2>(stream));
         value.method_handle = std::pair<uint8_t, uint16_t>(ref1, ref2);
-        std::clog << "[D] constant pool [" << stream.tellg() << "] <- Method Handle (15) : type desc. index=" << value.pair_reference.first << ", index=" << value.pair_reference.second << std::endl;
-        break;
-    case Constant::Type::METHOD_TYPE:
-        // u2 method type (pool index)
-        value.reference = parse<uint16_t>(extract<2>(stream));
-        std::clog << "[D] constant pool [" << stream.tellg() << "] <- Method Type (16) : index=" << value.reference << std::endl;
         break;
     case Constant::Type::INVOKE_DYNAMIC:
         // u4 InvokeDynamic
         value.invoke_dynamic = parse<uint32_t>(extract<4>(stream));
-        std::clog << "[D] constant pool [" << stream.tellg() << "] <- InvokeDynamic (18) : value=" << value.invoke_dynamic << std::endl;
         break;
     default:
-        throw std::logic_error("Unknown constant type");
+        throw std::logic_error("Unknown constant type " + std::to_string((unsigned int) type));
     }
-    return Constant(type, value);
+    return std::pair<Constant, bool>(Constant(type, value), skip);
+}
+
+std::vector<Constant> read_constant_block(std::ifstream & stream) {
+    uint16_t count = parse<uint16_t>(extract<2>(stream));
+    bool skip = false;
+
+    std::vector<Constant> constants = {Constant()}; // Initialize with an empty constant, since Java starts counting at 1.
+
+    for (uint16_t id = 1; id < count; ++id) {
+        if (skip) {
+            constants.push_back(Constant());
+            skip = false;
+            continue;
+        }
+
+        std::pair<Constant, bool> result = read_constant(stream);
+
+        constants.push_back(result.first);
+        skip = result.second;
+    }
+
+    return constants;
 }
 
 }

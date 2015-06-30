@@ -12,7 +12,8 @@ HEADERS += \
     flags.hpp \
     bytes.hpp \
     constants.hpp \
-    objects.hpp
+    objects.hpp \
+    types.hpp
 
 OTHER_FILES += \
     resources/Example.java
