@@ -104,11 +104,17 @@ typename std::enable_if<std::is_floating_point<T>::value && N == 8, T>::type par
 template <std::size_t N>
 std::array<unsigned char, N> convert(std::vector<unsigned char> const& raw, std::size_t start=0) {
     std::array<unsigned char, N> array;
-    if (raw.size() != N) {
-        throw std::logic_error("Cannot convert std::vector<unsigned char> to std::array<unsigned char, N> of different length");
+    for (std::size_t index = 0; index < N; ++index) {
+        array[index] = raw[start + index];
     }
-    for (std::size_t index = start; index < start + N; ++index) {
-        array[index] = raw[index];
+    return array;
+}
+
+template <std::size_t N, typename Iterator>
+typename std::enable_if<!std::is_same<Iterator, std::vector<unsigned char>>::value, std::array<unsigned char, N>>::type convert(Iterator & it) {
+    std::array<unsigned char, N> array;
+    for (std::size_t index = 0; index < N; ++index) {
+        array[index] = *it++;
     }
     return array;
 }

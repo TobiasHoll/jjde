@@ -6,7 +6,7 @@ CONFIG -= qt
 SOURCES += \
     main.cpp
 
-QMAKE_CXXFLAGS += -O3 -std=c++14 -g
+QMAKE_CXXFLAGS += -std=c++14 -g
 
 HEADERS += \
     flags.hpp \
@@ -19,5 +19,6 @@ HEADERS += \
     instructions.hpp
 
 OTHER_FILES += \
-    resources/Example.java
+    resources/Example.java \
+    resources/Types.java
 

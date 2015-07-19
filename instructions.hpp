@@ -1,6 +1,8 @@
 #ifndef INSTRUCTIONS_HPP
 #define INSTRUCTIONS_HPP
 
+#include <array>
+
 namespace jjde {
 
 #define JJDE_VARIABLE_ARGUMENT_COUNT 10000
@@ -123,6 +125,10 @@ namespace jjde {
     X( LREM            , 0 ), \
     X( FREM            , 0 ), \
     X( DREM            , 0 ), \
+    X( INEG            , 0 ), \
+    X( LNEG            , 0 ), \
+    X( FNEG            , 0 ), \
+    X( DNEG            , 0 ), \
     X( ISHL            , 0 ), \
     X( LSHL            , 0 ), \
     X( ISHR            , 0 ), \
@@ -260,6 +266,7 @@ namespace jjde {
     X( IMPDEP1         , 0 ), \
     X( IMPDEP2         , 0 )
 
+#define INSTRUCTION_COUNT 256
 
 struct Instruction {
     // Actual enum values
@@ -270,21 +277,25 @@ struct Instruction {
     };
 
     // Matching strings
-    static const std::string name[] = {
-#define X(_1, _2) #_1
-        JJDE_OPERATIONS_ENUM
-#undef X
-    };
+    static const std::array<std::string, INSTRUCTION_COUNT> name;
 
     // Operand counts
-    static const std::size_t argument_count[] = {
-#define X(_1, _2) _2
-        JJDE_OPERATIONS_ENUM
-#undef X
-    };
+    static const std::array<std::size_t, INSTRUCTION_COUNT> argument_count;
 
     Operation operation;
     std::vector<unsigned char> arguments;
+};
+
+const std::array<std::string, INSTRUCTION_COUNT> Instruction::name {
+#define X(_1, _2) #_1
+    JJDE_OPERATIONS_ENUM
+#undef X
+};
+
+const std::array<std::size_t, INSTRUCTION_COUNT> Instruction::argument_count {
+#define X(_1, _2) _2
+    JJDE_OPERATIONS_ENUM
+#undef X
 };
 
 }

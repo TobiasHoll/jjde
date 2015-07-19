@@ -10,7 +10,9 @@
 #include <vector>
 
 #include "class.hpp"
+#include "disassembler.hpp"
 #include "flags.hpp"
+#include "instructions.hpp"
 #include "objects.hpp"
 #include "types.hpp"
 
@@ -56,6 +58,34 @@ std::string cencode(std::vector<unsigned char> const& data) {
         if (32 <= uc && uc <= 126) {
             output << (char) uc;
         } else if (uc <= 15) {
+            output << "\\x0" << (int) uc;
+        } else {
+            output << "\\x" << (int) uc;
+        }
+    }
+    return output.str();
+}
+
+std::string hexencode(std::string const& data) {
+    std::stringstream output;
+    output << std::hex;
+    for (char c : data) {
+        int value = c;
+        if (value < 0) value += 256;
+        if (value <= 15) {
+            output << "\\x0" << value;
+        } else {
+            output << "\\x" << value;
+        }
+    }
+    return output.str();
+}
+
+std::string hexencode(std::vector<unsigned char> const& data) {
+    std::stringstream output;
+    output << std::hex;
+    for (unsigned char uc : data) {
+        if (uc <= 15) {
             output << "\\x0" << (int) uc;
         } else {
             output << "\\x" << (int) uc;
@@ -123,7 +153,7 @@ int main(int argc, char *argv[]) {
         std::cout << "│ │   \t├ Attributes" << std::endl;
         for (uint16_t j = 0; j < class_.fields[index].attributes.size(); ++j) {
             std::cout << "│ │   \t│ ├ " << class_.constants[class_.fields[index].attributes[j].name_index].value.string << std::endl;
-            std::cout << "│ │   \t│ │ └ " << cencode(class_.fields[index].attributes[j].data) << std::endl;
+            std::cout << "│ │   \t│ │ └ " << hexencode(class_.fields[index].attributes[j].data) << std::endl;
         }
     }
 
@@ -136,14 +166,14 @@ int main(int argc, char *argv[]) {
         std::cout << "│ │   \t├ Attributes" << std::endl;
         for (uint16_t j = 0; j < class_.methods[index].attributes.size(); ++j) {
             std::cout << "│ │   \t│ ├ " << class_.constants[class_.methods[index].attributes[j].name_index].value.string << std::endl;
-            std::cout << "│ │   \t│ │ └ " << cencode(class_.methods[index].attributes[j].data) << std::endl;
+            std::cout << "│ │   \t│ │ └ " << hexencode(class_.methods[index].attributes[j].data) << std::endl;
         }
     }
 
     std::cout << "├ Attributes" << std::endl;
     for (uint16_t index = 0; index < class_.attributes.size(); ++index) {
         std::cout << "│ ├ " << class_.constants[class_.attributes[index].name_index].value.string << std::endl;
-        std::cout << "│ │ └ " << cencode(class_.attributes[index].data) << std::endl;
+        std::cout << "│ │ └ " << hexencode(class_.attributes[index].data) << std::endl;
     }
 
     // Write java code.
@@ -225,7 +255,22 @@ int main(int argc, char *argv[]) {
         // Output code
         it = std::find_if(method.attributes.begin(), method.attributes.end(), [&class_](jjde::Attribute const& attr){ return (class_.constants[attr.name_index].value.string == "Code"); });
         if (it != method.attributes.end()) {
-            std::cout << "        " << cencode(it->data) << std::endl;
+            jjde::Code code = jjde::disassemble(it->data);
+            std::cout << "        max. stack size: " << code.max_stack_size << std::endl;
+            std::cout << "        local variables: " << code.local_variable_count << std::endl;
+            std::cout << "        instructions:" << std::endl;
+            for (jjde::Instruction const& instruction : code.instructions) {
+                std::cout << "          " << jjde::Instruction::name[instruction.operation] << " " << hexencode(instruction.arguments) << std::endl;
+            }
+            std::cout << "        exception handlers:" << std::endl;
+            for (jjde::ExceptionHandler const& handler : code.exception_handlers) {
+                std::cout << "          {" << handler.start << ", " << handler.end << ", " << handler.handler << ", " << handler.exception << "}" << std::endl;
+            }
+            std::cout << "        attributes:" << std::endl;
+            for (jjde::Attribute const& attribute : code.attributes) {
+                std::cout << "          " << class_.constants[attribute.name_index].value.string << std::endl;
+                std::cout << "            " << hexencode(attribute.data) << std::endl;
+            }
         } else {
             std::cout << "        <no code>" << std::endl;
         }
