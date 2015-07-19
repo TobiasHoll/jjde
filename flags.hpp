@@ -43,7 +43,25 @@ struct Flags {
         , is_interface(values[0] & 0x02)
         , is_abstract(values[0] & 0x04)
         , is_strictfp(values[0] & 0x08)
+        // synthetic, ...
     {}
+
+    std::string to_string() const {
+        std::string output;
+        if (is_public) output += "public ";
+        if (is_private) output += "private ";
+        if (is_protected) output += "protected ";
+        if (is_static) output += "static ";
+        if (is_final) output += "final ";
+        if (!is_class && is_synchronized) output += "synchronized "; // No output for special super.
+        if (is_volatile) output += "volatile ";
+        if (is_transient) output += "transient ";
+        if (is_native) output += "native ";
+        if (is_interface) output += "interface ";
+        if (is_abstract) output += "abstract ";
+        if (is_strictfp) output += "strictfp ";
+        return output.substr(0, output.size() - 1);
+    }
 };
 
 Flags read_class_flags(std::ifstream & stream) {

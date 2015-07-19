@@ -100,6 +100,19 @@ typename std::enable_if<std::is_floating_point<T>::value && N == 8, T>::type par
     return detail::construct_floating_point<11, 52, T>(sign, exponent, mantissa);
 }
 
+/* Convert from variable-length vectors */
+template <std::size_t N>
+std::array<unsigned char, N> convert(std::vector<unsigned char> const& raw, std::size_t start=0) {
+    std::array<unsigned char, N> array;
+    if (raw.size() != N) {
+        throw std::logic_error("Cannot convert std::vector<unsigned char> to std::array<unsigned char, N> of different length");
+    }
+    for (std::size_t index = start; index < start + N; ++index) {
+        array[index] = raw[index];
+    }
+    return array;
+}
+
 /* Unsafe cast */
 
 template <typename T, std::size_t N>

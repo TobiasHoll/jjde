@@ -14,7 +14,9 @@ HEADERS += \
     constants.hpp \
     objects.hpp \
     types.hpp \
-    class.hpp
+    class.hpp \
+    disassembler.hpp \
+    instructions.hpp
 
 OTHER_FILES += \
     resources/Example.java

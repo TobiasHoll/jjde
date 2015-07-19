@@ -1,5 +1,5 @@
 public class Example {
-    public static final String STRING = "Example string";
+    public static final String STRING = "Example string with special characters: \\ \t \n \r \f \" ' \b";
     public static final int INTEGER = -42;
     public static final float FLOAT = 3.14f;
     public static final long LONG = 42042042042042L;

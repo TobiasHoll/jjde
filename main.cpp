@@ -117,6 +117,7 @@ int main(int argc, char *argv[]) {
     std::cout << "├ Fields" << std::endl;
     for (uint16_t index = 0; index < class_.fields.size(); ++index) {
         std::cout << "│ ├[" << index << "]\t" << class_.constants[class_.fields[index].name_index].value.string << std::endl;
+        std::cout << "│ │   \t├ Type: " << jjde::decode_type(class_.constants[class_.fields[index].descriptor_index].value.string).to_string() << std::endl;
         std::cout << "│ │   \t├ Flags" << std::endl;
         print_flags(class_.fields[index].flags, "│ │   \t│ ├ ");
         std::cout << "│ │   \t├ Attributes" << std::endl;
@@ -129,6 +130,7 @@ int main(int argc, char *argv[]) {
     std::cout << "├ Methods" << std::endl;
     for (uint16_t index = 0; index < class_.methods.size(); ++index) {
         std::cout << "│ ├[" << index << "]\t" << class_.constants[class_.methods[index].name_index].value.string << std::endl;
+        std::cout << "│ │   \t├ Type: " << jjde::decode_type(class_.constants[class_.methods[index].descriptor_index].value.string).to_string() << std::endl;
         std::cout << "│ │   \t├ Flags" << std::endl;
         print_flags(class_.methods[index].flags, "│ │   \t│ ├ ");
         std::cout << "│ │   \t├ Attributes" << std::endl;
@@ -144,30 +146,96 @@ int main(int argc, char *argv[]) {
         std::cout << "│ │ └ " << cencode(class_.attributes[index].data) << std::endl;
     }
 
-    // Basic shell
+    // Write java code.
 
-    std::size_t cmd = 1;
-    std::clog << "Enter a constant pool index to decode the type string stored there. Enter '0' to quit." << std::endl << ">>> ";
-    std::clog.flush();
-    while (true) {
-        std::cin >> cmd;
-        if (cmd == 0) break;
-        if (cmd >= class_.constants.size() || class_.constants[cmd].type != jjde::Constant::Type::STRING) {
-            if (cmd >= class_.constants.size()) std::clog << "Invalid argument (constant " << cmd << " does not exist)" << std::endl;
-            else std::clog << "Invalid argument (constant " << cmd << " is not a string)" << std::endl;
-            std::clog << ">>> ";
-            std::clog.flush();
-            continue;
+    std::cout << std::endl;
+    std::cout << "---------------------------------------------------------------------------------------------" << std::endl;
+    /* Attributes to check:
+     *     Code                Method code (+ more information)
+     *     ConstantValue       Constant values for primitve 'final' fields
+     *     Exceptions          Exceptions thrown by a method
+     *     InnerClasses        Inner classes
+     *     LineNumberTable     Line numbers (debugging information)
+     *     LocalVariableTable  Local variable names (debugging information)
+     *     SourceFile          Source code file name (.java)
+     *     Synthetic           Field or method is compiler-generated
+     */
+    // Write class name and parent
+    std::cout << class_.flags.to_string() << " class " << class_.name << " extends " << class_.parent;
+    // Write interfaces
+    if (class_.interfaces.size() > 0) {
+        std::cout << " implements " << class_.interfaces[0];
+        for (std::size_t index = 1; index < class_.interfaces.size(); ++index) {
+            std::cout << ", " << class_.interfaces[index];
         }
-        try {
-            std::clog << jjde::decode_type(class_.constants[cmd].value.string).to_string() << std::endl;
-        } catch (...) {
-            std::clog << "Invalid argument (constant " << cmd << " is not a type string)" << std::endl;
-        }
-
-        std::clog << ">>> ";
-        std::clog.flush();
     }
+    std::cout << " {" << std::endl;
+
+    // Fields
+    for (jjde::Object const& field : class_.fields) {
+        // Flags
+        std::string flags = field.flags.to_string();
+        if (flags.size() > 0) flags += " ";
+        // Type
+        std::string type = jjde::decode_type(class_.constants[field.descriptor_index].value.string).to_string();
+        auto it = std::find_if(field.attributes.begin(), field.attributes.end(), [&class_](jjde::Attribute const& attr){ return (class_.constants[attr.name_index].value.string == "Signature"); });
+        if (it != field.attributes.end()) {
+            // Get signature instead of type (fixes generics type erasure)
+            type = jjde::decode_type(class_.constants[jjde::parse<uint16_t>(jjde::convert<2>(it->data))].value.string).to_string();
+        }
+        // Name
+        std::string name = class_.constants[field.name_index].value.string;
+        // Output (without value)
+        std::cout << "    " << flags << type << " " << name;
+        // Check for default value of primitive types in the ConstantValue attribute
+        it = std::find_if(field.attributes.begin(), field.attributes.end(), [&class_](jjde::Attribute const& attr){ return (class_.constants[attr.name_index].value.string == "ConstantValue"); });
+        if (it != field.attributes.end()) {
+            std::cout << " = " << class_.constants[jjde::parse<u_int16_t>(jjde::convert<2>(it->data))].to_value_string(class_.constants);
+        }
+        std::cout << ";" << std::endl;
+    }
+
+    // Methods
+    for (jjde::Object const& method : class_.methods) {
+        // Flags
+        std::string flags = method.flags.to_string();
+        if (flags.size() > 0) flags += " ";
+        // Name
+        std::string name = class_.constants[method.name_index].value.string;
+        std::string::size_type dollar = name.find("$"); // Function overloads are numbered using $0, $1, etc.
+        if (dollar != std::string::npos) {
+            name = name.substr(0, dollar);
+        }
+        // Type
+        jjde::Type jjde_type = jjde::decode_type(class_.constants[method.descriptor_index].value.string);
+        auto it = std::find_if(method.attributes.begin(), method.attributes.end(), [&class_](jjde::Attribute const& attr){ return (class_.constants[attr.name_index].value.string == "Signature"); });
+        if (it != method.attributes.end()) {
+            // Get signature instead of type (fixes generics type erasure)
+            jjde_type = jjde::decode_type(class_.constants[jjde::parse<uint16_t>(jjde::convert<2>(it->data))].value.string);
+        }
+        //  - Get argument names
+        std::vector<std::string> argument_names;
+        for (std::size_t index = 0; index < jjde_type.argument_types.size(); ++index) {
+            argument_names.push_back("arg" + std::to_string(index));
+        }
+        //  - Get proper type
+        std::string signature = jjde_type.to_string(name, argument_names);
+        // Output (without value)
+        std::cout << "    " << flags << signature << " {" << std::endl;
+        // Output code
+        it = std::find_if(method.attributes.begin(), method.attributes.end(), [&class_](jjde::Attribute const& attr){ return (class_.constants[attr.name_index].value.string == "Code"); });
+        if (it != method.attributes.end()) {
+            std::cout << "        " << cencode(it->data) << std::endl;
+        } else {
+            std::cout << "        <no code>" << std::endl;
+        }
+        // Output closing brace
+        std::cout << "    }" << std::endl;
+    }
+
+    std::cout << "}" << std::endl;
+    std::cout << "---------------------------------------------------------------------------------------------" << std::endl;
+    std::cout << std::endl;
 
     return 0;
 }

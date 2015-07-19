@@ -13,6 +13,38 @@
 
 namespace jjde {
 
+std::string encode(std::string const& data) {
+    std::stringstream output;
+    output << "\"" << std::oct;
+    for (char c : data) {
+        if (c == '"') output << "\\\"";
+        else if (32 <= c && c <= 126) output << c;
+        else if (c == '\t') output << "\\t";
+        else if (c == '\b') output << "\\b";
+        else if (c == '\n') output << "\\n";
+        else if (c == '\r') output << "\\r";
+        else if (c == '\f') output << "\\f";
+        else if (c == '\\') output << "\\\\";
+        else {
+            int value = c;
+            if (value < 0) value += 256;
+            if (value < 8) output << "\\00" << value;
+            if (value < 64) output << "\\0" << value;
+            else output << "\\" << value;
+        }
+    }
+    output << "\"";
+    return output.str();
+}
+
+std::string convert_java_string(std::vector<unsigned char> const& string) {
+    std::stringstream stream;
+    for (unsigned char c : string) {
+        stream << (char) c;
+    }
+    return stream.str();
+}
+
 /* Constants */
 
 struct Constant {
@@ -51,15 +83,19 @@ struct Constant {
 
     Type type;
     Value value;
-};
 
-std::string convert_java_string(std::vector<unsigned char> const& string) {
-    std::stringstream stream;
-    for (unsigned char c : string) {
-        stream << (char) c;
+    std::string to_value_string(std::vector<Constant> const& pool) const {
+        switch (type) {
+        case STRING:            return encode(value.string);
+        case INTEGER:           return std::to_string(value.integer);
+        case FLOAT:             return std::to_string(value.float_);
+        case LONG:              return std::to_string(value.long_);
+        case DOUBLE:            return std::to_string(value.double_);
+        case STRING_REFERENCE:  return pool[value.reference].to_value_string(pool);
+        default:                return "<! not a primitive type !>";
+        }
     }
-    return stream.str();
-}
+};
 
 std::pair<Constant, bool> read_constant(std::ifstream & stream) {
     Constant::Type type = (Constant::Type) parse<uint8_t>(extract<1>(stream));

@@ -65,7 +65,6 @@ Class read_class(std::ifstream & stream) {
 
     // Extract information about the parent class
 
-
     class_ref_index = jjde::parse<uint16_t>(jjde::extract<2>(stream));
     if (constants[class_ref_index].type != jjde::Constant::Type::CLASS_REFERENCE) {
         throw std::logic_error("Invalid bytecode (does not contain parent class name)");
@@ -85,8 +84,12 @@ Class read_class(std::ifstream & stream) {
 
     std::vector<std::string> interfaces;
 
-    for (uint16_t interface_id = 1; interface_id < interface_count; ++interface_id) {
-        string_index = jjde::parse<uint16_t>(jjde::extract<2>(stream));
+    for (uint16_t interface_id = 0; interface_id < interface_count; ++interface_id) {
+        class_ref_index = jjde::parse<uint16_t>(jjde::extract<2>(stream));
+        if (constants[class_ref_index].type != jjde::Constant::Type::CLASS_REFERENCE) {
+            throw std::logic_error("Invalid bytecode (interface name not set)");
+        }
+        string_index = constants[class_ref_index].value.reference;
         if (constants[string_index].type != jjde::Constant::Type::STRING) {
             throw std::logic_error("Invalid bytecode (interface name not set)");
         }

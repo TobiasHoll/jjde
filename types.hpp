@@ -46,32 +46,53 @@ struct Type {
         , return_type(std::make_shared<Type>(return_type_))
         , argument_types(argument_types_) {}
 
-    std::string to_string() const {
+    std::string to_string(std::string name="", std::vector<std::string> argument_names=std::vector<std::string>()) const{
+        // Text before and after the generics
         std::string pre_generics, post_generics;
         if (usage == Usage::FUNCTION) {
+            // Only the function return type comes before the generics
             pre_generics = return_type->to_string();
-            post_generics = "(";
-            for (std::size_t index = 0; index < argument_types.size(); ++index) {
-                if (index != 0) post_generics += ", ";
-                post_generics += argument_types[index].to_string();
+            // After the generics, the next token is either '(' (without name) or ' name(' (with name)
+            post_generics = (name == "" ? "" : " " + name) + "(";
+            // Add arguments
+            for (std::size_t argument = 0; argument < argument_types.size(); ++argument) {
+                // Add comma if necessary
+                if (argument != 0) post_generics += ", ";
+                // Add the argument type
+                post_generics += argument_types[argument].to_string();
+                // If a name is given for this argument, use it
+                if (argument_names.size() > argument && argument_names[argument] != "") {
+                    post_generics += " " + argument_names[argument];
+                }
             }
+            // Close parenthesis
             post_generics += ")";
         } else {
+            // The part before the generics is identical to `java_type`
             pre_generics = java_type;
+            // Only array specifiers are placed after the generics
+            post_generics = "";
             for (std::size_t dimension = 0; dimension < array_dimensions; ++dimension) {
                 post_generics += "[]";
             }
         }
-        std::string generics_representation;
+        // Add generics
+        std::string in_generics = "";
         if (generics.size() > 0) {
-            generics_representation = "<";
-            for (std::size_t index = 0; index < generics.size(); ++index) {
-                if (index != 0) generics_representation += ", ";
-                generics_representation += generics[index].to_string();
+            // Add <
+            in_generics += "<";
+            // Add generic types
+            for (std::size_t generic = 0; generic < generics.size(); ++generic) {
+                // Comma, if necessary
+                if (generic != 0) in_generics += ", ";
+                // Add type
+                in_generics += generics[generic].to_string();
             }
-            generics_representation += ">";
+            // Add >
+            in_generics += ">";
         }
-        return pre_generics + generics_representation + post_generics;
+        // Concatenate the parts
+        return pre_generics + in_generics + post_generics;
     }
 };
 
@@ -162,7 +183,7 @@ std::vector<Type> decode_types(std::string const& internal_type) {
                     current_type = "";
                     break;
                 case 'Z':
-                    types.push_back(Type{current_type, Type::Usage::STANDARD, std::vector<Type>(), "bool", array_count});
+                    types.push_back(Type{current_type, Type::Usage::STANDARD, std::vector<Type>(), "boolean", array_count});
                     array_count = 0;
                     current_type = "";
                     break;
@@ -184,6 +205,7 @@ std::vector<Type> decode_types(std::string const& internal_type) {
                     // Add type
                     std::string proper_type = current_type;
                     std::replace(proper_type.begin(), proper_type.end(), '/', '.');
+                    std::replace(proper_type.begin(), proper_type.end(), '$', '.');
                     types.push_back(Type{"L" + current_type + ";", Type::Usage::STANDARD, generics, proper_type, array_count});
                     // Reset
                     current_type = "";
