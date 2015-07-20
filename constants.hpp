@@ -18,13 +18,13 @@ std::string encode(std::string const& data) {
     output << "\"" << std::oct;
     for (char c : data) {
         if (c == '"') output << "\\\"";
+        else if (c == '\\') output << "\\\\";
         else if (32 <= c && c <= 126) output << c;
         else if (c == '\t') output << "\\t";
         else if (c == '\b') output << "\\b";
         else if (c == '\n') output << "\\n";
         else if (c == '\r') output << "\\r";
         else if (c == '\f') output << "\\f";
-        else if (c == '\\') output << "\\\\";
         else {
             int value = c;
             if (value < 0) value += 256;

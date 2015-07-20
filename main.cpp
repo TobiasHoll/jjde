@@ -72,11 +72,7 @@ std::string hexencode(std::string const& data) {
     for (char c : data) {
         int value = c;
         if (value < 0) value += 256;
-        if (value <= 15) {
-            output << "\\x0" << value;
-        } else {
-            output << "\\x" << value;
-        }
+        output << (value <= 15 ? "0" : "") << value << " ";
     }
     return output.str();
 }
@@ -85,11 +81,7 @@ std::string hexencode(std::vector<unsigned char> const& data) {
     std::stringstream output;
     output << std::hex;
     for (unsigned char uc : data) {
-        if (uc <= 15) {
-            output << "\\x0" << (int) uc;
-        } else {
-            output << "\\x" << (int) uc;
-        }
+        output << (uc <= 15 ? "0" : "") << (int) uc << " ";
     }
     return output.str();
 }
