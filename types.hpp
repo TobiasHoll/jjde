@@ -46,6 +46,8 @@ struct Type {
         , return_type(std::make_shared<Type>(return_type_))
         , argument_types(argument_types_) {}
 
+    Type() = default;
+
     std::string to_string(std::string name="", std::vector<std::string> argument_names=std::vector<std::string>()) const{
         // Text before and after the generics
         std::string pre_generics, post_generics;
@@ -74,6 +76,9 @@ struct Type {
             post_generics = "";
             for (std::size_t dimension = 0; dimension < array_dimensions; ++dimension) {
                 post_generics += "[]";
+            }
+            if (name != "") {
+                post_generics += " " + name;
             }
         }
         // Add generics
@@ -113,6 +118,12 @@ struct Type {
 
 inline Type decode_type(std::string const& internal_type);
 
+enum type_state {
+    FULL_TYPE,
+    CLASS_TYPE,
+    GENERIC_TYPE
+};
+
 std::vector<Type> decode_types(std::string const& internal_type) {
     std::string::size_type open = internal_type.find('(');
     std::string::size_type close = internal_type.find(')');
@@ -126,7 +137,7 @@ std::vector<Type> decode_types(std::string const& internal_type) {
         std::size_t generic_count = 0;
         std::string current_type;
         std::string current_generics = "";
-        bool in_class_type = false;
+        type_state state = FULL_TYPE;
 
         // Iterate over the string
         for (std::string::size_type index = 0; index < internal_type.size(); ++index) {
@@ -137,7 +148,7 @@ std::vector<Type> decode_types(std::string const& internal_type) {
             } else if (c == '>') {
                 current_generics += c;
                 --generic_count;
-            } else if (!in_class_type) {
+            } else if (state == FULL_TYPE) {
                 switch (c) {
                 case '[':
                     ++array_count;
@@ -187,8 +198,11 @@ std::vector<Type> decode_types(std::string const& internal_type) {
                     array_count = 0;
                     current_type = "";
                     break;
+                case 'T':
+                    state = GENERIC_TYPE;
+                    break;
                 case 'L':
-                    in_class_type = true;
+                    state = CLASS_TYPE;
                     break;
                 default:
                     throw std::logic_error("Invalid type specifier");
@@ -202,17 +216,23 @@ std::vector<Type> decode_types(std::string const& internal_type) {
                     if (current_generics.size() > 0) {
                         generics = decode_types(current_generics.substr(1, current_generics.size() - 2));
                     }
+
                     // Add type
                     std::string proper_type = current_type;
                     std::replace(proper_type.begin(), proper_type.end(), '/', '.');
                     std::replace(proper_type.begin(), proper_type.end(), '$', '.');
-                    types.push_back(Type{"L" + current_type + ";", Type::Usage::STANDARD, generics, proper_type, array_count});
+
+                    std::string base;
+                    if (state == CLASS_TYPE) base = "L" + current_type + ";";
+                    else if (state == GENERIC_TYPE) base = "T" + current_type + ";";
+                    types.push_back(Type{base, Type::Usage::STANDARD, generics, proper_type, array_count});
+
                     // Reset
                     current_type = "";
                     current_generics = "";
                     generic_count = 0;
                     array_count = 0;
-                    in_class_type = false;
+                    state = FULL_TYPE;
                 } else {
                     current_type += c;
                 }

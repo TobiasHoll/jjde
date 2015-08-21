@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "bytes.hpp"
+#include "types.hpp"
 
 namespace jjde {
 
@@ -37,8 +38,30 @@ std::string encode(std::string const& data) {
     return output.str();
 }
 
+std::string hexencode(std::string const& data) {
+    std::stringstream output;
+    output << std::hex;
+    for (char c : data) {
+        int value = c;
+        if (value < 0) value += 256;
+        output << (value <= 15 ? "0" : "") << value << " ";
+    }
+    return output.str();
+}
+
+std::string hexencode(std::vector<unsigned char> const& data) {
+    std::stringstream output;
+    output << std::hex;
+    for (unsigned char uc : data) {
+        output << (uc <= 15 ? "0" : "") << (int) uc << " ";
+    }
+    return output.str();
+}
+
+
 std::string convert_java_string(std::vector<unsigned char> const& string) {
     std::stringstream stream;
+    // TODO: Special java string encoding
     for (unsigned char c : string) {
         stream << (char) c;
     }
@@ -84,15 +107,24 @@ struct Constant {
     Type type;
     Value value;
 
-    std::string to_value_string(std::vector<Constant> const& pool) const {
+    std::string to_string(std::vector<Constant> const& pool) const {
         switch (type) {
-        case STRING:            return encode(value.string);
-        case INTEGER:           return std::to_string(value.integer);
-        case FLOAT:             return std::to_string(value.float_);
-        case LONG:              return std::to_string(value.long_);
-        case DOUBLE:            return std::to_string(value.double_);
-        case STRING_REFERENCE:  return pool[value.reference].to_value_string(pool);
-        default:                return "<! not a primitive type !>";
+        case EMPTY:                      return "<! empty !>";
+        case STRING:                     return encode(value.string);
+        case INTEGER:                    return std::to_string(value.integer);
+        case FLOAT:                      return std::to_string(value.float_);
+        case LONG:                       return std::to_string(value.long_);
+        case DOUBLE:                     return std::to_string(value.double_);
+        case CLASS_REFERENCE:            return pool[value.reference].to_string(pool);
+        case STRING_REFERENCE:           return pool[value.reference].to_string(pool);
+        case FIELD_REFERENCE:            return "field \"" + pool[value.pair_reference.second].to_string(pool) + "\" of class " + pool[value.pair_reference.first].to_string(pool);
+        case METHOD_REFERENCE:           return "method \"" + pool[value.pair_reference.second].to_string(pool) + "\" of class " + pool[value.pair_reference.first].to_string(pool);
+        case INTERFACE_METHOD_REFERENCE: return "interface method \"" + pool[value.pair_reference.second].to_string(pool) + "\" of class " + pool[value.pair_reference.first].to_string(pool);
+        case NAME_TYPE_DESCRIPTOR:       return decode_type(pool[value.pair_reference.second].value.string).to_string(pool[value.pair_reference.first].value.string);
+        case METHOD_HANDLE:              return "<! method handle !>";
+        case METHOD_TYPE:                return "<! method type !>";
+        case INVOKE_DYNAMIC:             return "<! INVOKE_DYNAMIC !>";
+        default:                         return "<! invalid type !>";
         }
     }
 };

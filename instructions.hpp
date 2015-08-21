@@ -284,6 +284,7 @@ struct Instruction {
 
     Operation operation;
     std::vector<unsigned char> arguments;
+    uint32_t location;
 };
 
 const std::array<std::string, INSTRUCTION_COUNT> Instruction::name {

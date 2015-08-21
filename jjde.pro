@@ -16,7 +16,8 @@ HEADERS += \
     types.hpp \
     class.hpp \
     disassembler.hpp \
-    instructions.hpp
+    instructions.hpp \
+    annotater.hpp
 
 OTHER_FILES += \
     resources/Example.java \
