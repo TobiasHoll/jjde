@@ -1,5 +1,5 @@
-#ifndef BYTES_HPP
-#define BYTES_HPP
+#ifndef JJDE_BYTES_HPP
+#define JJDE_BYTES_HPP
 
 #include <algorithm>
 #include <array>
@@ -119,14 +119,18 @@ typename std::enable_if<!std::is_same<Iterator, std::vector<unsigned char>>::val
     return array;
 }
 
-/* Unsafe cast */
+/* Unsafe memory operations */
 
 template <typename T, std::size_t N>
-T unsafe_parse(std::array<unsigned char, N> && raw) {
-    std::reverse(raw.begin(), raw.end());
-    return *((T*) raw.data());
+void deserialize(std::array<unsigned char, N> && raw, T *pointer) {
+	memcpy(pointer, raw.data(), N);
+}
+
+template <typename T>
+void deserialize(std::vector<unsigned char> && raw, T *pointer) {
+	memcpy(pointer, raw.data(), raw.size());
 }
 
 }
 
-#endif // BYTES_HPP
+#endif // JJDE_BYTES_HPP

@@ -1,5 +1,5 @@
-#ifndef FLAGS_HPP
-#define FLAGS_HPP
+#ifndef JJDE_FLAGS_HPP
+#define JJDE_FLAGS_HPP
 
 #include <array>
 #include <fstream>
@@ -70,4 +70,4 @@ Flags read_class_flags(std::ifstream & stream) {
 
 }
 
-#endif // FLAGS_HPP
+#endif // JJDE_FLAGS_HPP

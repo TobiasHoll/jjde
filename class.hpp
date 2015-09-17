@@ -1,5 +1,5 @@
-#ifndef CLASS_HPP
-#define CLASS_HPP
+#ifndef JJDE_CLASS_HPP
+#define JJDE_CLASS_HPP
 
 #include <cstdint>
 #include <fstream>
@@ -116,10 +116,10 @@ Class read_class(std::ifstream & stream) {
 }
 
 Class read_class(std::string const& filename) {
-    std::ifstream stream(filename);
+    std::ifstream stream(filename, std::ios::binary);
     return read_class(stream);
 }
 
 }
 
-#endif // CLASS_HPP
+#endif // JJDE_CLASS_HPP

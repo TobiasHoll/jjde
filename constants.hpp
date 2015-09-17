@@ -1,5 +1,5 @@
-#ifndef CONSTANTS_HPP
-#define CONSTANTS_HPP
+#ifndef JJDE_CONSTANTS_HPP
+#define JJDE_CONSTANTS_HPP
 
 #include <array>
 #include <fstream>
@@ -40,7 +40,7 @@ std::string encode(std::string const& data) {
 
 std::string hexencode(std::string const& data) {
     std::stringstream output;
-    output << std::hex;
+    output << std::hex << std::uppercase;
     for (char c : data) {
         int value = c;
         if (value < 0) value += 256;
@@ -51,7 +51,7 @@ std::string hexencode(std::string const& data) {
 
 std::string hexencode(std::vector<unsigned char> const& data) {
     std::stringstream output;
-    output << std::hex;
+    output << std::hex << std::uppercase;
     for (unsigned char uc : data) {
         output << (uc <= 15 ? "0" : "") << (int) uc << " ";
     }
@@ -115,7 +115,7 @@ struct Constant {
         case FLOAT:                      return std::to_string(value.float_);
         case LONG:                       return std::to_string(value.long_);
         case DOUBLE:                     return std::to_string(value.double_);
-        case CLASS_REFERENCE:            return pool[value.reference].to_string(pool);
+        case CLASS_REFERENCE:            return decode_class_name(pool[value.reference].to_string(pool));
         case STRING_REFERENCE:           return pool[value.reference].to_string(pool);
         case FIELD_REFERENCE:            return "field \"" + pool[value.pair_reference.second].to_string(pool) + "\" of class " + pool[value.pair_reference.first].to_string(pool);
         case METHOD_REFERENCE:           return "method \"" + pool[value.pair_reference.second].to_string(pool) + "\" of class " + pool[value.pair_reference.first].to_string(pool);
@@ -216,4 +216,4 @@ std::vector<Constant> read_constant_block(std::ifstream & stream) {
 
 }
 
-#endif // CONSTANTS_HPP
+#endif // JJDE_CONSTANTS_HPP

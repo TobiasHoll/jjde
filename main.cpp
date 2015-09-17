@@ -18,9 +18,14 @@
 #include "objects.hpp"
 #include "types.hpp"
 
+
 int main(int argc, char *argv[]) {
 
-    assert(argc > 1);
+    if (argc <= 1) {
+        std::cerr << "Usage:" << std::endl
+                  << "    " << argv[0] << " <file.class>" << std::endl;
+        return 1;
+    }
 
     jjde::Class class_ = jjde::read_class(argv[1]);
 
@@ -38,8 +43,6 @@ int main(int argc, char *argv[]) {
      *     LocalVariableTable  Local variable names (debugging information)
      *     SourceFile          Source code file name (.java)
      *     Synthetic           Field or method is compiler-generated
-     *
-     *     TODO : Automatic check of Signature on methods, fields and types before evaluating base type
      */
 
     // Write class name and parent
@@ -80,7 +83,7 @@ int main(int argc, char *argv[]) {
         // Check for default value of primitive types in the ConstantValue attribute
         it = std::find_if(field.attributes.begin(), field.attributes.end(), [&class_](jjde::Attribute const& attr){ return (class_.constants[attr.name_index].value.string == "ConstantValue"); });
         if (it != field.attributes.end()) {
-            std::cout << " = " << class_.constants[jjde::parse<u_int16_t>(jjde::convert<2>(it->data))].to_string(class_.constants);
+            std::cout << " = " << class_.constants[jjde::parse<uint16_t>(jjde::convert<2>(it->data))].to_string(class_.constants);
         }
 
         std::cout << ";" << std::endl;
@@ -124,12 +127,14 @@ int main(int argc, char *argv[]) {
         if (it != method.attributes.end()) {
             std::cout << " {" << std::endl;
             jjde::Bytecode bytecode = jjde::disassemble(it->data);
-            jjde::Code code = jjde::annotate(class_, bytecode);
-            std::cout << code.to_string() << std::endl;
+            jjde::Code code = jjde::annotate(class_, bytecode, method.flags.is_static);
+            std::cout << code.to_string();
             std::cout << "    }" << std::endl;
         } else {
             std::cout << " {}" << std::endl;
         }
+
+        std::cout << std::endl;
     }
 
     std::cout << "}" << std::endl;
@@ -138,4 +143,3 @@ int main(int argc, char *argv[]) {
 
     return 0;
 }
-

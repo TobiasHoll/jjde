@@ -1,5 +1,5 @@
-#ifndef TYPES_HPP
-#define TYPES_HPP
+#ifndef JJDE_TYPES_HPP
+#define JJDE_TYPES_HPP
 
 #include <algorithm>
 #include <memory>
@@ -257,6 +257,11 @@ inline Type decode_type(std::string const& internal_type) {
     return decode_types(internal_type).at(0); // Use at to avoid segfaults.
 }
 
+std::string decode_class_name(std::string class_name) {
+    std::replace(class_name.begin(), class_name.end(), '/', '.');
+    return class_name;
 }
 
-#endif // TYPES_HPP
+}
+
+#endif // JJDE_TYPES_HPP

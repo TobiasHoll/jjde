@@ -1,5 +1,5 @@
-#ifndef INSTRUCTIONS_HPP
-#define INSTRUCTIONS_HPP
+#ifndef JJDE_INSTRUCTIONS_HPP
+#define JJDE_INSTRUCTIONS_HPP
 
 #include <array>
 
@@ -301,4 +301,4 @@ const std::array<std::size_t, INSTRUCTION_COUNT> Instruction::argument_count {
 
 }
 
-#endif // INSTRUCTIONS_HPP
+#endif // JJDE_INSTRUCTIONS_HPP

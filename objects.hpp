@@ -1,5 +1,5 @@
-#ifndef OBJECTS_HPP
-#define OBJECTS_HPP
+#ifndef JJDE_OBJECTS_HPP
+#define JJDE_OBJECTS_HPP
 
 #include <array>
 #include <fstream>
@@ -72,4 +72,4 @@ std::vector<Object> read_object_block(std::ifstream & stream) {
 
 }
 
-#endif // OBJECTS_HPP
+#endif // JJDE_OBJECTS_HPP
