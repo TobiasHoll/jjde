@@ -21,5 +21,7 @@ HEADERS += \
 
 OTHER_FILES += \
     resources/Example.java \
-    resources/Types.java
+    resources/Types.java \
+    resources/Structures.java
+
 
