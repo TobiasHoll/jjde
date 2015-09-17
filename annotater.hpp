@@ -117,7 +117,7 @@ Code annotate(Class const& class_, Bytecode const& bytecode, bool static_) {
             break;
         }
         std::cout << std::endl;
-        simulation.process(instruction);
+        //simulation.process(instruction);
     }
     return Code { class_, bytecode };
 }

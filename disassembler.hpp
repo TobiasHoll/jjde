@@ -45,7 +45,7 @@ Bytecode disassemble(std::vector<unsigned char> const& code) {
             std::size_t padding, offset_count, additional_arguments;
             // Inspect the instruction
             switch (op) {
-            case Instruction::TABLESWITCH:
+            case Instruction::TABLESWITCH: {
                 // TABLESWITCH [padding] [arguments]
                 // Skip padding - do not add it to the argument list. If necessary, the amount of padding can be deduced from the instruction locations
                 padding = 3 - (index % 4); // 0, 1, 2 or 3 bytes so that the next byte's location is a multiple of four.
@@ -70,7 +70,8 @@ Bytecode disassemble(std::vector<unsigned char> const& code) {
                 iterator += offset_count * 4;
                 index += offset_count * 4;
                 break;
-            case Instruction::LOOKUPSWITCH:
+            }
+            case Instruction::LOOKUPSWITCH: {
                 // LOOKUPSWITCH [padding] [arguments]
                 // Skip padding - do not add it to the argument list. If necessary, the amount of padding can be deduced from the instruction locations
                 padding = (4 - (index % 4)) % 4; // 0, 1, 2 or 3 bytes so that the next byte's location is a multiple of four.
@@ -91,7 +92,8 @@ Bytecode disassemble(std::vector<unsigned char> const& code) {
                 iterator += offset_count * 8;
                 index += offset_count * 8;
                 break;
-            case Instruction::WIDE:
+            }
+            case Instruction::WIDE: {
                 // WIDE opcode [arguments]
                 arguments.push_back(*iterator++);
                 actual = (Instruction::Operation) arguments[0];
@@ -102,6 +104,7 @@ Bytecode disassemble(std::vector<unsigned char> const& code) {
                 }
                 index += arguments.size();
                 break;
+            }
             default:
                 std::cerr << "Reported variable argument count for invalid instruction (" << (int) opcode << ")" << std::endl;
                 throw std::logic_error("Invalid instruction for variable argument count");
