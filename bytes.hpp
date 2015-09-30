@@ -11,6 +11,28 @@
 
 namespace jjde {
 
+/* Formatting byte data */
+
+std::string hexencode(std::string const& data) {
+    std::stringstream output;
+    output << std::hex << std::uppercase;
+    for (char c : data) {
+        int value = c;
+        if (value < 0) value += 256;
+        output << (value <= 15 ? "0" : "") << value << " ";
+    }
+    return output.str();
+}
+
+std::string hexencode(std::vector<unsigned char> const& data) {
+    std::stringstream output;
+    output << std::hex << std::uppercase;
+    for (unsigned char uc : data) {
+        output << (uc <= 15 ? "0" : "") << (int) uc << " ";
+    }
+    return output.str();
+}
+
 /* Read bytes from the stream */
 
 template <std::size_t N>

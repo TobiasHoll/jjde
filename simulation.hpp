@@ -82,6 +82,7 @@ struct Simulation {
 
     void process(Instruction const& instruction) {
         uint16_t index;
+        int64_t signed_value;
         std::string expr;
         std::size_t previous;
         std::string tmp;
@@ -264,7 +265,6 @@ struct Simulation {
             stack.insert(stack.begin() + (previous - 3), stack[stack.size() - 2]);
             stack.insert(stack.begin() + (previous - 3), stack[stack.size() - 1]);
             break;
-            break;
         case Instruction::DUP2_X2:
             // Insert top two values below the fourth element
             previous = stack.size();
@@ -358,10 +358,33 @@ struct Simulation {
             stack.resize(stack.size() - 2);
             stack.push_back(expr);
             break;
-        //TODO: Insert IINC here (should output something, basically varX += Y)
+        case Instruction::IINC:
+            index = parse<uint8_t>(convert<1>(instruction.arguments));
+            signed_value = parse<int8_t>(convert<1>(instruction.arguments, 1));
+            std::cout << "var" << index << " += " << signed_value << std::endl;
+            break;
         //TODO: Insert conversion instructions here
         //TODO: Insert comparison instructions here
+        /*case Instruction::IFEQ:
+            signed_value = parse<int16_t>(convert<2>(instruction.arguments));
+            std::cout << "if (" << stack[stack.size() - 1]
+            X( IFEQ            , 2 ), \
+            X( IFNE            , 2 ), \
+            X( IFLT            , 2 ), \
+            X( IFGE            , 2 ), \
+            X( IFGT            , 2 ), \
+            X( IFLE            , 2 ), \*/
         //TODO: Insert other instructions here
+        case Instruction::IRETURN:
+        case Instruction::LRETURN:
+        case Instruction::DRETURN:
+        case Instruction::ARETURN:
+            std::cout << "return " << stack[stack.size() - 1] << ";" << std::endl;
+            stack.pop_back();
+            break;
+        case Instruction::RETURN:
+            std::cout << "return;" << std::endl;
+            break;
         default:
             std::cout << "Simulation not yet implemented for opcode " << Instruction::name[instruction.operation] << std::endl;
             break;

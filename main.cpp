@@ -10,6 +10,7 @@
 #include <type_traits>
 #include <vector>
 
+#include "analysis.hpp"
 #include "annotater.hpp"
 #include "class.hpp"
 #include "disassembler.hpp"
@@ -130,6 +131,10 @@ int main(int argc, char *argv[]) {
             jjde::Code code = jjde::annotate(class_, bytecode, method.flags.is_static);
             std::cout << code.to_string();
             std::cout << "    }" << std::endl;
+
+            std::cout << "    >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+            jjde::_visualize_code_flow(std::move(bytecode));
+            std::cout << "    <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
         } else {
             std::cout << " {}" << std::endl;
         }

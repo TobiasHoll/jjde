@@ -46,9 +46,9 @@ struct Code {
 Code annotate(Class const& class_, Bytecode const& bytecode, bool static_) {
     Simulation simulation(class_, bytecode, static_);
 
-    std::cout << std::hex << std::setfill('0');
+    std::cout << std::setfill('0');
     for (Instruction instruction : bytecode.instructions) {
-        std::cout << "        " << std::setw(4) << std::uppercase << instruction.location << "\t" << Instruction::name[instruction.operation] << " " << hexencode(instruction.arguments);
+        std::cout << std::hex << "        " << std::setw(4) << std::uppercase << instruction.location << "\t" << Instruction::name[instruction.operation] << " " << hexencode(instruction.arguments);
         switch (instruction.operation) {
         // Show absolute jump information for IF... and GOTO... instructions
         case Instruction::GOTO:
@@ -116,7 +116,7 @@ Code annotate(Class const& class_, Bytecode const& bytecode, bool static_) {
         default:
             break;
         }
-        std::cout << std::endl;
+        std::cout << std::dec << std::endl;
         //simulation.process(instruction);
     }
     return Code { class_, bytecode };
