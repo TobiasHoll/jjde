@@ -157,7 +157,7 @@ std::pair<Constant, bool> read_constant(std::ifstream & stream) {
         break;
     case Constant::Type::METHOD_HANDLE:
         // u1u2 method handle (type descriptor and pool index)
-        ref1 = parse<uint8_t>(extract<2>(stream));
+        ref1 = parse<uint8_t>(extract<1>(stream));
         ref2 = parse<uint16_t>(extract<2>(stream));
         value.method_handle = std::pair<uint8_t, uint16_t>(ref1, ref2);
         break;
