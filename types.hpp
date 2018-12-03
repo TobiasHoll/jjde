@@ -199,6 +199,7 @@ std::vector<Type> decode_types(std::string const& internal_type) {
                     current_type = "";
                     break;
                 case 'T':
+                case '*':
                     state = GENERIC_TYPE;
                     break;
                 case 'L':
